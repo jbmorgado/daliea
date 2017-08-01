@@ -6,47 +6,41 @@ SIGMA_FACTOR = 0.01  # Sigma as factor of max dimensions for gaussian mutations
 class Gene(object):
     """Define class to hold gene"""
 
-    def __init__(self, size_x, size_y, n_vertices, cl_type):
+    def __init__(self, size_x, size_y, n_vertices):
         """Initialize gene with all values at zero
 
         Attributes
             size_x          Maximum X coordinate (can't exceed the image)
             size_y          Maximum Y coordinate (can't exceed the image)
-            n_vertices      The number of vertices per gene
-            cl_type         Color type is one of the following:
-                            - 'RGBA': RGB with transparency
-                            - 'RGB': RGB simple"""
+            n_vertices      The number of vertices per gene"""
 
         self.size_x = size_x
         self.size_y = size_y
         self.n_vertices = n_vertices
-        if cl_type == 'RGBA':
-            self._cl_type = 'RGBA'
-            self._n_colors = 4
-        elif cl_type == 'RGB':
-            self._cl_type = 'RGB'
-            self._n_colors = 3
-        else:
-            raise ValueError("method __init__ @ Gene doesn't accept\
-                attribute %s" % cl_type)
 
-        self.vertices = list(zip([0]*n_vertices, [0]*n_vertices))
-        self.color = tuple([0]*self._n_colors)
+        self.vertices = list(zip(np.random.randint(size_x, size=n_vertices),
+                                 np.random.randint(size_y, size=n_vertices)))
+        # rgba = [np.random.randint(256, size=3),
+        #         np.random.randint(30, 60, size=1)]
+        rgba = [np.random.randint(256, size=3), [0]]
+        self.color = tuple(np.concatenate(rgba, axis=0))
 
     def _make_rnd_color(self):
         """Return a random color composed of int from 0 to 255."""
-        return(tuple(np.random.randint(256, size=self._n_colors)))
+        rgba = [np.random.randint(256, size=3),
+                np.random.randint(20, 1200, size=1)]
+        return(tuple(np.concatenate(rgba, axis=0)))
 
     def _make_rnd_vertex(self):
-        """Return a random vertex with maximum size of image."""
-        return(tuple(np.random.randint(self.size_x),
-                     np.random.randint(self.size_y)))
+        """Return a random vertex tuple with maximum size of image."""
+        return((np.random.randint(self.size_x),
+                np.random.randint(self.size_y)))
 
     def soft_mutate_color(self):
         """Inplace mutate one element of color by a small delta."""
         color = list(self.color)
-        ele_n = np.random.randint(self._n_colors)  # choose rnd element
-        delta_max = np.rint(256 * DELTA_FACTOR)
+        ele_n = np.random.randint(4)  # choose rnd element
+        delta_max = np.int(np.rint(256 * DELTA_FACTOR))
         delta = np.random.randint(low=-delta_max, high=delta_max+1)
         color[ele_n] = color[ele_n] + delta
         # ensure it's between 0 to 255
@@ -61,14 +55,14 @@ class Gene(object):
         coord_n = np.random.randint(2)  # choose X or Y coordinate
         if coord_n == 0:
             # X coordinate
-            delta_max = np.rint(self.size_x * DELTA_FACTOR)
+            delta_max = np.int(np.rint(self.size_x * DELTA_FACTOR))
             delta = np.random.randint(low=-delta_max, high=delta_max+1)
             vertex[coord_n] = vertex[coord_n] + delta
             # ensure it's bellow  size_x
             vertex[coord_n] = np.minimum(vertex[coord_n], self.size_x)
         else:
             # Y coordinate
-            delta_max = np.rint(self.size_y * DELTA_FACTOR)
+            delta_max = np.int(np.rint(self.size_y * DELTA_FACTOR))
             delta = np.random.randint(low=-delta_max, high=delta_max+1)
             vertex[coord_n] = vertex[coord_n] + delta
             # ensure it's bellow  size_y
@@ -81,9 +75,9 @@ class Gene(object):
     def gaussian_mutate_color(self):
         """Inplace mutate one element of color by a normal distribution."""
         color = list(self.color)
-        ele_n = np.random.randint(self._n_colors)  # choose rnd element
+        ele_n = np.random.randint(4)  # choose rnd element
         sigma = 256 * SIGMA_FACTOR
-        color[ele_n] = np.random.normal(color[ele_n], sigma)
+        color[ele_n] = np.int(np.round(np.random.normal(color[ele_n], sigma)))
         # ensure it's between 0 to 255
         color[ele_n] = np.minimum(color[ele_n], 255)
         color[ele_n] = np.maximum(color[ele_n], 0)
@@ -97,13 +91,15 @@ class Gene(object):
         if coord_n == 0:
             # X coordinate
             sigma = self.size_x * SIGMA_FACTOR
-            vertex[coord_n] = np.random.normal(vertex[coord_n], sigma)
+            vertex[coord_n] = np.int(np.round(np.random.normal(vertex[coord_n],
+                                                               sigma)))
             # ensure it's bellow  size_x
             vertex[coord_n] = np.minimum(vertex[coord_n], self.size_x)
         else:
             # Y coordinate
             sigma = self.size_y * SIGMA_FACTOR
-            vertex[coord_n] = np.random.normal(vertex[coord_n], sigma)
+            vertex[coord_n] = np.int(np.round(np.random.normal(vertex[coord_n],
+                                                               sigma)))
             # ensure it's bellow  size_y
             vertex[coord_n] = np.minimum(vertex[coord_n], self.size_y)
 
@@ -138,13 +134,13 @@ class Gene(object):
                 vertex_n = np.random.randint(self.n_vertices)
                 self.vertices[vertex_n] = self._make_rnd_vertex()
         elif mutation == 'Soft':
-            cl_factor = self._n_colors/(self._n_colors+self.n_vertices*2)
+            cl_factor = 4/(4+self.n_vertices*2)
             if np.random.random() < cl_factor:
                 self.soft_mutate_color()
             else:
                 self.soft_mutate_vertices
         elif mutation == 'Gaussian':
-            cl_factor = self._n_colors/(self._n_colors+self.n_vertices*2)
+            cl_factor = 4/(4+self.n_vertices*2)
             if np.random.random() < cl_factor:
                 self.gaussian_mutate_color()
             else:

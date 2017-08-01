@@ -1,48 +1,52 @@
+# -*- coding: UTF-8 -*-
 from gene import Gene
 import numpy as np
-from PIL import Image
-from PIL import ImageChops
-from PIL import ImageDraw
+from PIL import (Image, ImageChops, ImageDraw, ImageStat)
 
 
 class Chromosome(object):
     """Define class to hold chromosome"""
 
-    def __init__(self, size_x, size_y, n_vertices, cl_type, n_genes, target):
-        """Initialize gene with all values at zero
+    def __init__(self):
+        """Initialize chromosome bare"""
+
+        self.size_x = None
+        self.size_y = None
+        self.n_vertices = None
+        self.n_genes = None
+        self.genes = []
+        self.phenotype = None
+        self.fitness = None  # the closer to 0 the better
+        self.mutations = 0
+        self.improvements = 0
+        self.evolution_time = 0
+
+    def setup(self, size_x, size_y, n_vertices, n_genes):
+        """Setup  chromosome with all values at zero
 
         Attributes
             size_x      Maximum X coordinate (can't exceed the image)
             size_y      Maximum Y coordinate (can't exceed the image)
             n_vertices  The number of vertices per gene
-            cl_type     Color type is one of the following:
-                        - 'RGBA': RGB with transparency
-                        - 'RGB': RGB simple
-            n_genes     Number of genes per chromosome
-            target      The image to evolve into"""
+            n_genes     Number of genes per chromosome"""
 
         self.size_x = size_x
         self.size_y = size_y
         self.n_vertices = n_vertices
-        if cl_type == 'RGBA':
-            self._cl_type = 'RGBA'
-            self._n_colors = 4
-        elif cl_type == 'RGB':
-            self._cl_type = 'RGB'
-            self._n_colors = 3
-        else:
-            raise ValueError("method __init__ @ Chromosome doesn't accept\
-                                attribute %s" % cl_type)
         self.n_genes = n_genes
 
         self.genes = []
         for i in range(n_genes):
-            gene = Gene(size_x, size_y, n_vertices, cl_type)
+            gene = Gene(size_x, size_y, n_vertices)
             self.genes.append(gene)
         self.phenotype = None
-        self.make_phenoeetype()
+        self.make_phenotype()
         self.fitness = None  # the closer to 0 the better
-        self.calc_fitness(target)
+        self.fitness_p = None  # the closer to 100 the better
+        self.max_handicap = size_x * size_y * 3 * 256
+        self.mutations = 0
+        self.improvements = 0
+        self.neutrals = 0
 
     def make_phenotype(self, color=(255, 255, 255, 255)):
         """Update phenotype atribute by rendering the image.
@@ -53,9 +57,11 @@ class Chromosome(object):
         poly = Image.new('RGBA', (self.size_x, self.size_y))
         pdraw = ImageDraw.Draw(poly)
         for gene in self.genes:
-            pdraw.polygon(gene.vertices, gene.color)
-            canvas.paste(poly, mask=poly)
-        self.phenotype = canvas
+            # if fully transparent, don't render it
+            if gene.color[3] != 0:
+                pdraw.polygon(gene.vertices, gene.color)
+                canvas.paste(poly, mask=poly)
+        self.phenotype = canvas.convert("RGB")
         del pdraw
         del poly
         del canvas
@@ -66,10 +72,14 @@ class Chromosome(object):
 
         Attributes
             target      Target image in PIL Image format."""
-        img_diff = ImageChops.difference(target, self.phenotype)
-        self.fitness = np.sum(list(img_diff.getdata()))
+        img1 = target
+        img2 = self.phenotype
+        handicap = ImageChops.difference(img1, img2)
+        img_stats = ImageStat.Stat(handicap)
+        self.fitness = np.sum(img_stats.sum)
+        self.fitness_p = 100. * (1. - (self.fitness/self.max_handicap))
 
-    def mutate(self, mutation):
+    def mutate(self, mutation, n_mut=1):
         """Inplace mutate one gene according to type of mutation.
 
         Attributes
@@ -81,7 +91,9 @@ class Chromosome(object):
                         - 'Soft': change one parameter (R, G, B, A, X, Y) by
                           small delta.
                         - 'Gaussian': change one parameter by delta picked from
-                           normal distribution around the current value."""
+                           normal distribution around the current value.
+            n_mut       Number of mutations"""
 
-        gene_n = np.random.randint(self.n_genes)
-        self.genes(gene_n).mutate(mutation)
+        for i in range(0, n_mut):
+            gene_n = np.random.randint(self.n_genes)
+            self.genes[gene_n].mutate(mutation)

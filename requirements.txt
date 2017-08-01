@@ -3,3 +3,4 @@ pep8
 autopep8
 numpy
 pillow-SIMD
+pyqt5
