@@ -2,7 +2,8 @@
 
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QFileDialog, QDesktopWidget, QHBoxLayout,
-    QVBoxLayout, QGridLayout, QGroupBox, QLabel)
+    QVBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel, QComboBox,
+    QLineEdit, QSpinBox)
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PIL import (Image, ImageQt)
@@ -15,6 +16,7 @@ MAX_SIZE = 256
 class Interface(QWidget):
     evolve_sig = pyqtSignal(object)
     set_stop_flag_sig = pyqtSignal(bool)
+    set_mtype_flag_sig = pyqtSignal(str)
 
     def __init__(self, chromosome):
         # super().__init__()
@@ -32,10 +34,10 @@ class Interface(QWidget):
         self.evolution_dt = 0.0
 
         # Omega Group
-        self.omega_label = QLabel()
         omega_gbox = QGroupBox()
         omega_gbox.setTitle("Omega")
         omega_vbox = QVBoxLayout()
+        self.omega_label = QLabel()
         omega_vbox.addWidget(self.omega_label)
         self.omega_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         omega_btn_load = QPushButton('Load Image', self)
@@ -44,10 +46,10 @@ class Interface(QWidget):
         omega_gbox.setLayout(omega_vbox)
 
         # Alpha Group
-        self.alpha_label = QLabel()
         alpha_gbox = QGroupBox()
         alpha_gbox.setTitle("Alpha")
         alpha_vbox = QVBoxLayout()
+        self.alpha_label = QLabel()
         alpha_vbox.addWidget(self.alpha_label)
         self.alpha_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         alpha_btn_save = QPushButton('Save', self)
@@ -55,51 +57,62 @@ class Interface(QWidget):
         alpha_vbox.addWidget(alpha_btn_save)
         alpha_gbox.setLayout(alpha_vbox)
 
+        # Configure Group
+        config_gbox = QGroupBox()
+        config_gbox.setTitle("Configure")
+        config_lbox = QFormLayout()
+        self.mtype = QComboBox()
+        config_lbox.addRow(QLabel("Mutation:"), self.mtype)
+        mtype_list = ['Hard', 'Medium', 'Soft', 'Gaussian']
+        self.mtype.addItems(mtype_list)
+        self.mtype.currentTextChanged.connect(self._mtype_changed)
+        config_lbox.addRow(QLabel("Background:"), QLineEdit())
+        poly_num_in = QSpinBox()
+        config_lbox.addRow(QLabel("Polygons:"), poly_num_in)
+        vert_num_in = QSpinBox()
+        config_lbox.addRow(QLabel("Vertices:"), vert_num_in)
+        config_gbox.setLayout(config_lbox)
+
         # Status Group
-        fit_label = QLabel("Fitness:")
-        self.fit_dsp = QLabel()
-        imp_label = QLabel("Improvements:")
-        self.imp_dsp = QLabel()
-        ntr_lbl = QLabel("Neutral Imp.:")
-        self.ntr_dsp = QLabel()
-        mut_label = QLabel("Mutations:")
-        self.mut_dsp = QLabel()
-        elp_label = QLabel("Elapsed time (s):")
-        self.elp_dsp = QLabel()
-        mps_label = QLabel("Mutations/s:")
-        self.mps_dsp = QLabel()
-        self._start_btn = QPushButton('Start', self)
-        self._prev_start_btn_status = None
-        self._setup_start_btn('Start')
         status_gbox = QGroupBox()
         status_gbox.setTitle("Status")
         status_vbox = QVBoxLayout()
         status_grid = QGridLayout()
         status_grid.setSpacing(10)
-        status_grid.addWidget(fit_label, 0, 0)
+        status_grid.addWidget(QLabel("Fitness:"), 0, 0)
+        self.fit_dsp = QLabel()
         status_grid.addWidget(self.fit_dsp, 0, 1)
-        status_grid.addWidget(imp_label, 1, 0)
+        status_grid.addWidget(QLabel("Improvements:"), 1, 0)
+        self.imp_dsp = QLabel()
         status_grid.addWidget(self.imp_dsp, 1, 1)
-        status_grid.addWidget(ntr_lbl, 2, 0)
+        status_grid.addWidget(QLabel("Neutral Imp.:"), 2, 0)
+        self.ntr_dsp = QLabel()
         status_grid.addWidget(self.ntr_dsp, 2, 1)
-        status_grid.addWidget(mut_label, 3, 0)
+        status_grid.addWidget(QLabel("Mutations:"), 3, 0)
+        self.mut_dsp = QLabel()
         status_grid.addWidget(self.mut_dsp, 3, 1)
-        status_grid.addWidget(elp_label, 4, 0)
+        status_grid.addWidget(QLabel("Elapsed time (s):"), 4, 0)
+        self.elp_dsp = QLabel()
         status_grid.addWidget(self.elp_dsp, 4, 1)
-        status_grid.addWidget(mps_label, 5, 0)
+        status_grid.addWidget(QLabel("Mutations/s:"), 5, 0)
+        self.mps_dsp = QLabel()
         status_grid.addWidget(self.mps_dsp, 5, 1)
         status_vbox.addLayout(status_grid)
         status_vbox.addStretch()
+        self._start_btn = QPushButton('Start', self)
+        self._prev_start_btn_status = None
+        self._setup_start_btn('Start')
         status_vbox.addWidget(self._start_btn)
         status_gbox.setLayout(status_vbox)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(omega_gbox)
-        hbox.addWidget(alpha_gbox)
-        hbox.addWidget(status_gbox)
+        hbox.addWidget(omega_gbox, 1)
+        hbox.addWidget(alpha_gbox, 1)
+        hbox.addWidget(config_gbox, 1)
+        hbox.addWidget(status_gbox, 1)
 
         self.setLayout(hbox)
-        self.resize(800, 400)
+        self.resize(1024, 400)
         self.center()
         self.setWindowTitle('DaliEA')
         self.show()
@@ -180,6 +193,10 @@ class Interface(QWidget):
         self.evolution_dt = self.evolution_dt + time.time() - self.evolution_st
         self.set_stop_flag_sig.emit(True)
         self._setup_start_btn('Start')
+
+    def _mtype_changed(self):
+        """Send mutation type signal to evolution."""
+        self.set_mtype_flag_sig.emit(self.mtype.currentText())
 
     @pyqtSlot(object)
     def update_status(self, chromosome):
