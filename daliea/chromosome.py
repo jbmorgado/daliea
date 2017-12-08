@@ -2,6 +2,10 @@
 from gene import Gene
 import numpy as np
 from PIL import (Image, ImageChops, ImageDraw, ImageStat)
+import copy
+
+DELTA_FACTOR = 0.01  # Max delta factor for soft mutations
+SIGMA_FACTOR = 0.01  # Sigma as factor of max dimensions for gaussian mutations
 
 
 class Chromosome(object):
@@ -79,21 +83,73 @@ class Chromosome(object):
         self.fitness = np.sum(img_stats.sum)
         self.fitness_p = 100. * (1. - (self.fitness/self.max_handicap))
 
-    def mutate(self, mutation, n_mut=1):
+    def mutate(self, mutation, swap=False, n_mut=1):
         """Inplace mutate one gene according to type of mutation.
 
         Attributes
             mutation    Mutation type is one of the following:
                         - 'Hard': change a color and transparency of one
                           polygon to a completely random value together with
-                          changing one vertex to a completely random point.
+                          changing one vertex to a completely random point
+                          and perform swap.
                         - 'Medium': change one parameter to random number.
                         - 'Soft': change one parameter (R, G, B, A, X, Y) by
                           small delta.
                         - 'Gaussian': change one parameter by delta picked from
                            normal distribution around the current value.
+            swap        Chromosome level mutation alowing gene shifting.
             n_mut       Number of mutations"""
 
         for i in range(0, n_mut):
             gene_n = np.random.randint(self.n_genes)
-            self.genes[gene_n].mutate(mutation)
+            if swap is True:
+                if mutation == 'Hard':
+                    self.genes[gene_n].mutate(mutation)
+                    self._swap_vertices(mutation, gene_n)
+
+                swap_rand = np.random.rand()
+                if swap_rand < 0.33:
+                    if mutation == 'Medium':
+                        self._swap_vertices(mutation, gene_n)
+                        return
+                    elif mutation == 'Soft':
+                        self._swap_vertices(mutation, gene_n)
+                        return
+                    elif mutation == 'Gaussian':
+                        self._swap_vertices(mutation, gene_n)
+                        return
+                else:
+                    self.genes[gene_n].mutate(mutation)
+            else:
+                self.genes[gene_n].mutate(mutation)
+
+    def _swap_vertices(self, mutation, gene_n1):
+        """Inplace swap the place of two genes.
+
+        Attributes
+            mutation    Mutation type is one of the following:
+                        - 'Hard': swap gene_n1 with random gene.
+                        - 'Medium': swap gene_n1 with random gene.
+                        - 'Soft': swap gene_n1 with nearby gene picked by a
+                          small delta.
+                        - 'Gaussian': swap gene_n1 with nearby gene picked by a
+                          normal distribution around the current value.
+            gene_n1     Gene to swap."""
+
+        if mutation == 'Hard' or mutation == 'Medium':
+            gene_n2 = np.random.randint(self.n_genes)  # choose 2nd rnd gene
+        elif mutation == 'Soft':
+            delta_max = np.int(self.n_genes * DELTA_FACTOR)
+            delta = np.random.randint(low=-delta_max, high=delta_max+1)
+            gene_n2 = gene_n1 + delta
+            gene_n2 = np.maximum(0, np.minimum(gene_n2, self.n_genes-1))
+        elif mutation == 'Gaussian':
+            sigma = self.n_genes * SIGMA_FACTOR
+            gene_n2 = np.int(np.round(np.random.normal(gene_n1, sigma)))
+            gene_n2 = np.maximum(0, np.minimum(gene_n2, self.n_genes-1))
+
+        gene1 = copy.copy(self.genes[gene_n1])
+        gene2 = copy.copy(self.genes[gene_n2])
+
+        self.genes[gene_n1] = gene2
+        self.genes[gene_n2] = gene1

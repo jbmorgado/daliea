@@ -67,10 +67,17 @@ class Interface(QWidget):
         self.mtype.addItems(mtype_list)
         self.mtype.currentTextChanged.connect(self._mtype_changed)
         config_lbox.addRow(QLabel("Background:"), QLineEdit())
-        poly_num_in = QSpinBox()
-        config_lbox.addRow(QLabel("Polygons:"), poly_num_in)
-        vert_num_in = QSpinBox()
-        config_lbox.addRow(QLabel("Vertices:"), vert_num_in)
+        self.polynum = QSpinBox()
+        config_lbox.addRow(QLabel("Polygons:"), self.polynum)
+        # self.polynum.valueChanged.connect(self._polynum_changed)
+        self.polynum.setMinimum(1)
+        self.polynum.setMaximum(1000)
+        self.polynum.setValue(50)
+        self.vertnum = QSpinBox()
+        config_lbox.addRow(QLabel("Vertices:"), self.vertnum)
+        self.vertnum.setMinimum(3)
+        self.vertnum.setMaximum(10)
+        self.vertnum.setValue(4)
         config_gbox.setLayout(config_lbox)
 
         # Status Group
@@ -173,7 +180,9 @@ class Interface(QWidget):
         if self.chromosome.n_genes is None:
             width = self.omega.width
             height = self.omega.height
-            self.chromosome.setup(width, height, 4, 50)
+            polynum_val = self.polynum.value()
+            vertnum_val = self.vertnum.value()
+            self.chromosome.setup(width, height, vertnum_val, polynum_val)
             self.chromosome.make_phenotype((0, 0, 0, 255))
             self.chromosome.calc_fitness(self.omega)
 
@@ -197,6 +206,10 @@ class Interface(QWidget):
     def _mtype_changed(self):
         """Send mutation type signal to evolution."""
         self.set_mtype_flag_sig.emit(self.mtype.currentText())
+
+    # def _polynum_changed(self):
+    #     """Send polynum signal to evolution."""
+    #     self.set_polynum_flag_sig.emit(self.polynum.valueFromText())
 
     @pyqtSlot(object)
     def update_status(self, chromosome):

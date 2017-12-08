@@ -12,13 +12,14 @@ class Evolution(QObject):
         self.chromosome = chromosome
         self._stop_flag = None
         self._mtype_flag = 'Hard'
+        # self._polynum_flag = None
 
     @pyqtSlot(object)
     def evolve(self, omega):
         c_descendant = copy.deepcopy(self.chromosome)
 
         while self._stop_flag is False:
-            c_descendant.mutate(self._mtype_flag)
+            c_descendant.mutate(self._mtype_flag, swap=True)
             c_descendant.mutations = c_descendant.mutations + 1
             self.chromosome.mutations = self.chromosome.mutations + 1
             c_descendant.make_phenotype((0, 0, 0, 255))
@@ -52,7 +53,13 @@ class Evolution(QObject):
         # TODO: Error checking
         self._mtype_flag = value
 
+    # @pyqtSlot(int)
+    # def _set_polynum_flag(self, value):
+    #     # TODO: Error checking
+    #     self._polynum_flag = value
+
     def make_connection(self, interface):
         interface.evolve_sig.connect(self.evolve)
         interface.set_stop_flag_sig.connect(self._set_stop_flag)
         interface.set_mtype_flag_sig.connect(self._set_mtype_flag)
+        # interface.set_polynum_flag_sig.connect(self._set_polynum_flag)
