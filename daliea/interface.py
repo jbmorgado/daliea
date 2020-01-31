@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtWidgets import (
+from PySide2.QtWidgets import (
     QWidget, QPushButton, QFileDialog, QDesktopWidget, QHBoxLayout,
     QVBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel, QComboBox,
     QLineEdit, QSpinBox)
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PySide2.QtGui import QPixmap
+from PySide2.QtCore import Qt, Signal, Slot
 from PIL import (Image, ImageQt)
 import sys
 import time
@@ -14,9 +14,9 @@ MAX_SIZE = 256
 
 
 class Interface(QWidget):
-    evolve_sig = pyqtSignal(object)
-    set_stop_flag_sig = pyqtSignal(bool)
-    set_mtype_flag_sig = pyqtSignal(str)
+    evolve_sig = Signal(object)
+    set_stop_flag_sig = Signal(bool)
+    set_mtype_flag_sig = Signal(str)
 
     def __init__(self, chromosome):
         # super().__init__()
@@ -211,7 +211,7 @@ class Interface(QWidget):
     #     """Send polynum signal to evolution."""
     #     self.set_polynum_flag_sig.emit(self.polynum.valueFromText())
 
-    @pyqtSlot(object)
+    @Slot(object)
     def update_status(self, chromosome):
         evolution_dt = self.evolution_dt + time.time() - self.evolution_st
         self.elp_dsp.setText(str(round(evolution_dt, 1)))

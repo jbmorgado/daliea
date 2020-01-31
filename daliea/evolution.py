@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtCore import QObject, Signal, Slot
+from PySide2.QtWidgets import QApplication
 import copy
 
 
 class Evolution(QObject):
-    mutated_sig = pyqtSignal(object)
+    mutated_sig = Signal(object)
 
     def __init__(self, chromosome):
         QObject.__init__(self)
@@ -14,7 +14,7 @@ class Evolution(QObject):
         self._mtype_flag = 'Hard'
         # self._polynum_flag = None
 
-    @pyqtSlot(object)
+    @Slot(object)
     def evolve(self, omega):
         c_descendant = copy.deepcopy(self.chromosome)
 
@@ -41,19 +41,19 @@ class Evolution(QObject):
             self.mutated_sig.emit(self.chromosome)
             QApplication.processEvents()
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def _set_stop_flag(self, value):
         if value is not True and value is not False:
             raise ValueError("method _set_stop_flag @ evolution doesn't accept\
                               attribute %s" % value)
         self._stop_flag = value
 
-    @pyqtSlot(str)
+    @Slot(str)
     def _set_mtype_flag(self, value):
         # TODO: Error checking
         self._mtype_flag = value
 
-    # @pyqtSlot(int)
+    # @Slot(int)
     # def _set_polynum_flag(self, value):
     #     # TODO: Error checking
     #     self._polynum_flag = value

@@ -8,7 +8,7 @@ import sys
 from evolution import Evolution
 from interface import Interface
 from chromosome import Chromosome
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtWidgets import QApplication
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of __main__.py
