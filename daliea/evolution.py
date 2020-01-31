@@ -11,7 +11,7 @@ class Evolution(QObject):
         QObject.__init__(self)
         self.chromosome = chromosome
         self._stop_flag = None
-        self._mtype_flag = 'Hard'
+        self._mtype_flag = 'All'
         # self._polynum_flag = None
 
     @Slot(object)
@@ -20,8 +20,8 @@ class Evolution(QObject):
 
         while self._stop_flag is False:
             c_descendant.mutate(self._mtype_flag, swap=True)
-            c_descendant.mutations = c_descendant.mutations + 1
-            self.chromosome.mutations = self.chromosome.mutations + 1
+            c_descendant.generations = c_descendant.generations + 1
+            self.chromosome.generations = self.chromosome.generations + 1
             c_descendant.make_phenotype((0, 0, 0, 255))
             c_descendant.calc_fitness(omega)
             # If descendant is less fit than parent keep parent
@@ -35,8 +35,8 @@ class Evolution(QObject):
             # If descendant fitter than parent keep descendant
             else:
                 self.chromosome = copy.deepcopy(c_descendant)
-                self.chromosome.improvements = self.chromosome.improvements + 1
-                c_descendant.improvements = c_descendant.improvements + 1
+                self.chromosome.mutations = self.chromosome.mutations + 1
+                c_descendant.mutations = c_descendant.mutations + 1
 
             self.mutated_sig.emit(self.chromosome)
             QApplication.processEvents()

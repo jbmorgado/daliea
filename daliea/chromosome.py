@@ -21,8 +21,12 @@ class Chromosome(object):
         self.genes = []
         self.phenotype = None
         self.fitness = None  # the closer to 0 the better
+        self.generations = 0
+        self.h_mutations = 0
+        self.m_mutations = 0
+        self.s_mutations = 0
+        self.g_mutations = 0
         self.mutations = 0
-        self.improvements = 0
         self.evolution_time = 0
 
     def setup(self, size_x, size_y, n_vertices, n_genes):
@@ -48,8 +52,12 @@ class Chromosome(object):
         self.fitness = None  # the closer to 0 the better
         self.fitness_p = None  # the closer to 100 the better
         self.max_handicap = size_x * size_y * 3 * 256
+        self.generations = 0
+        self.h_mutations = 0
+        self.m_mutations = 0
+        self.s_mutations = 0
+        self.g_mutations = 0
         self.mutations = 0
-        self.improvements = 0
         self.neutrals = 0
 
     def make_phenotype(self, color=(255, 255, 255, 255)):
@@ -88,6 +96,7 @@ class Chromosome(object):
 
         Attributes
             mutation    Mutation type is one of the following:
+                        - 'All': randomly choose one of the mutations
                         - 'Hard': change a color and transparency of one
                           polygon to a completely random value together with
                           changing one vertex to a completely random point
@@ -100,6 +109,18 @@ class Chromosome(object):
             swap        Chromosome level mutation alowing gene shifting.
             n_mut       Number of mutations"""
 
+        if mutation == 'All':
+            mutation = np.random.choice(['Hard', 'Medium', 'Soft', 'Gaussian'])
+            
+        if mutation == 'Hard':
+            self.h_mutations = self.h_mutations + 1
+        elif mutation == 'Medium':
+            self.m_mutations = self.m_mutations + 1
+        elif mutation == 'Soft':
+            self.s_mutations = self.s_mutations + 1
+        elif mutation == 'Gaussian':
+            self.g_mutations = self.g_mutations + 1
+            
         for i in range(0, n_mut):
             gene_n = np.random.randint(self.n_genes)
             if swap is True:

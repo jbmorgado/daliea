@@ -28,7 +28,7 @@ class Interface(QWidget):
         # Connect the trigger signal to a slot.
         self.omega = None
         self.elp_val = 0
-        self.improvements = 0
+        self.mutations = 0
         self.neutrals = 0
         self.evolution_st = 0.0
         self.evolution_dt = 0.0
@@ -63,7 +63,7 @@ class Interface(QWidget):
         config_lbox = QFormLayout()
         self.mtype = QComboBox()
         config_lbox.addRow(QLabel("Mutation:"), self.mtype)
-        mtype_list = ['Hard', 'Medium', 'Soft', 'Gaussian']
+        mtype_list = ['All', 'Hard', 'Medium', 'Soft', 'Gaussian']
         self.mtype.addItems(mtype_list)
         self.mtype.currentTextChanged.connect(self._mtype_changed)
         config_lbox.addRow(QLabel("Background:"), QLineEdit())
@@ -89,21 +89,33 @@ class Interface(QWidget):
         status_grid.addWidget(QLabel("Fitness:"), 0, 0)
         self.fit_dsp = QLabel()
         status_grid.addWidget(self.fit_dsp, 0, 1)
-        status_grid.addWidget(QLabel("Improvements:"), 1, 0)
-        self.imp_dsp = QLabel()
-        status_grid.addWidget(self.imp_dsp, 1, 1)
-        status_grid.addWidget(QLabel("Neutral Imp.:"), 2, 0)
+        status_grid.addWidget(QLabel("Mutations:"), 1, 0)
+        self.mut_dsp = QLabel()
+        status_grid.addWidget(self.mut_dsp, 1, 1)
+        status_grid.addWidget(QLabel("Neutral Mut.:"), 2, 0)
         self.ntr_dsp = QLabel()
         status_grid.addWidget(self.ntr_dsp, 2, 1)
-        status_grid.addWidget(QLabel("Mutations:"), 3, 0)
-        self.mut_dsp = QLabel()
-        status_grid.addWidget(self.mut_dsp, 3, 1)
-        status_grid.addWidget(QLabel("Elapsed time (s):"), 4, 0)
+        status_grid.addWidget(QLabel("Generations:"), 3, 0)
+        self.gen_dsp = QLabel()
+        status_grid.addWidget(self.gen_dsp, 3, 1)
+        status_grid.addWidget(QLabel("Hard M.:"), 4, 0)
+        self.hmut_dsp = QLabel()
+        status_grid.addWidget(self.hmut_dsp, 4, 1)
+        status_grid.addWidget(QLabel("Medium M.:"), 5, 0)
+        self.mmut_dsp = QLabel()
+        status_grid.addWidget(self.mmut_dsp, 5, 1)
+        status_grid.addWidget(QLabel("Soft M.:"), 6, 0)
+        self.smut_dsp = QLabel()
+        status_grid.addWidget(self.smut_dsp, 6, 1)
+        status_grid.addWidget(QLabel("Gaussian M.:"), 7, 0)
+        self.gmut_dsp = QLabel()
+        status_grid.addWidget(self.gmut_dsp, 7, 1)
+        status_grid.addWidget(QLabel("Elapsed time (s):"), 8, 0)
         self.elp_dsp = QLabel()
-        status_grid.addWidget(self.elp_dsp, 4, 1)
-        status_grid.addWidget(QLabel("Mutations/s:"), 5, 0)
-        self.mps_dsp = QLabel()
-        status_grid.addWidget(self.mps_dsp, 5, 1)
+        status_grid.addWidget(self.elp_dsp, 8, 1)
+        status_grid.addWidget(QLabel("Generations/s:"), 9, 0)
+        self.gps_dsp = QLabel()
+        status_grid.addWidget(self.gps_dsp, 9, 1)
         status_vbox.addLayout(status_grid)
         status_vbox.addStretch()
         self._start_btn = QPushButton('Start', self)
@@ -187,11 +199,15 @@ class Interface(QWidget):
             self.chromosome.calc_fitness(self.omega)
 
             self.fit_dsp.setText(str(0.00))
-            self.imp_dsp.setText(str(0))
-            self.ntr_dsp.setText(str(0))
             self.mut_dsp.setText(str(0))
+            self.ntr_dsp.setText(str(0))
+            self.gen_dsp.setText(str(0))
+            self.hmut_dsp.setText(str(0))
+            self.mmut_dsp.setText(str(0))
+            self.smut_dsp.setText(str(0))
+            self.gmut_dsp.setText(str(0))
             self.elp_dsp.setText(str(0.0))
-            self.mps_dsp.setText(str(0.0))
+            self.gps_dsp.setText(str(0.0))
 
         self._setup_start_btn('Stop')
         self.set_stop_flag_sig.emit(False)
@@ -215,13 +231,17 @@ class Interface(QWidget):
     def update_status(self, chromosome):
         evolution_dt = self.evolution_dt + time.time() - self.evolution_st
         self.elp_dsp.setText(str(round(evolution_dt, 1)))
-        self.mps_dsp.setText(str(round(chromosome.mutations /
+        self.gps_dsp.setText(str(round(chromosome.generations /
                                        evolution_dt, 1)))
-        self.mut_dsp.setText(str(chromosome.mutations))
-        if chromosome.improvements > self.improvements:
-            self.improvements = chromosome.improvements
+        self.gen_dsp.setText(str(chromosome.generations))
+        self.hmut_dsp.setText(str(chromosome.h_mutations))
+        self.mmut_dsp.setText(str(chromosome.m_mutations))
+        self.smut_dsp.setText(str(chromosome.s_mutations))
+        self.gmut_dsp.setText(str(chromosome.g_mutations))
+        if chromosome.mutations > self.mutations:
+            self.mutations = chromosome.mutations
             self.fit_dsp.setText(str(round(chromosome.fitness_p, 2)))
-            self.imp_dsp.setText(str(chromosome.improvements))
+            self.mut_dsp.setText(str(chromosome.mutations))
             self._update_alpha_display(chromosome.phenotype)
         elif chromosome.neutrals > self.neutrals:
             self.neutrals = chromosome.neutrals
